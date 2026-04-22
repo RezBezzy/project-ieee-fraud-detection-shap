@@ -1,27 +1,55 @@
-# IEEE-CIS Fraud Detection & ML Explainability
+# IEEE-CIS Fraud Detection: A Financial Risk & XAI Framework
 
 ## 📌 Project Overview
-This project focuses on detecting credit card fraud using the **IEEE-CIS Fraud Detection** dataset. The goal is to compare various machine learning models, address extreme class imbalance, and make the predictions interpretable using **SHAP values**.
+This project develops a state-of-the-art fraud detection system using the **IEEE-CIS Fraud Detection** dataset. Beyond pure classification, this framework bridges the gap between **High-Performance Machine Learning** and **Operational Risk Management** (compliant with Basel III/IV frameworks).
 
-### 🎯 Background & Motivation
-With my background in **Controlling and Finance**, I am particularly interested in the intersection of risk management and AI. Model explainability (XAI) is not only a technical challenge but is becoming a regulatory necessity under the **EU AI Act** (specifically regarding transparency requirements for high-risk AI systems in the financial sector).
+### 🎯 Key Objectives
+* **Performance:** Benchmarking Gradient Boosting (XGBoost/LightGBM) against Hybrid Deep Learning architectures.
+* **Explainability (XAI):** Implementing **SHAP values** to satisfy regulatory transparency requirements (e.g., EU AI Act for high-risk financial AI).
+* **Business Logic:** Translating model performance into financial impact using a **Cost-Sensitive Matrix** (Expected Loss Reduction).
 
-## 🛠️ Methodology & Experiments
-1.  **Explorative Data Analysis (EDA):** Identifying patterns and anomalies in fraudulent vs. legitimate transactions.
-2.  **Data Preprocessing:** Handling high-cardinality categorical data and missing values.
-3.  **Dimensionality Reduction (PCA):** Experimenting with **Principal Component Analysis** to reduce the feature space, handle multi-collinearity, and visualize high-dimensional clusters.
-4.  **Class Imbalance:** Implementing techniques such as SMOTE (Oversampling), Undersampling, or Cost-sensitive Learning.
-5.  **Modeling:** Benchmarking multiple classifiers (e.g., Logistic Regression, Random Forest, XGBoost, and LightGBM).
-6.  **Interpretability (XAI):** Utilizing **SHAP (SHapley Additive exPlanations)** to analyze feature importance at both a global and local (individual transaction) level.
+---
+
+## 🛠️ Methodology & State-of-the-Art Features
+
+### 1. Memory-Efficient Pipeline
+Due to the large scale of the dataset (600+ features, millions of rows), a custom memory optimization pipeline was implemented:
+* **Numerical Downcasting:** Reducing bit-depth (e.g., `int64` to `int8`) based on value ranges, reducing RAM usage by ~70%.
+* **Serialization:** Utilizing **Apache Parquet** format for faster I/O and efficient columnar storage.
+
+### 2. "Magic" Feature Engineering
+Following industry best practices (Kaggle Top Solutions), I implemented logic-based features to bypass data anonymization:
+* **User-ID (UID) Reconstruction:** Creating pseudo-UIDs using `card1`, `addr1`, and `D1n` (TransactionDay - D1) to track client behavior over time.
+* **Aggregation Features:** Calculating user-specific transaction means, frequencies, and deviation scores (Z-scores).
+
+### 3. Modern EDA & Visualization
+* **UMAP (Uniform Manifold Approximation and Projection):** Used for high-dimensional visualization to identify "Relation Camouflage" and latent fraud clusters.
+
+### 4. Hybrid Modeling Approach
+* **Baseline:** Optimized Gradient Boosting (LightGBM/XGBoost) with `scale_pos_weight` to handle extreme class imbalance (3.5% fraud).
+* **Deep Learning:** A **Hybrid CNN-LSTM architecture** designed to capture both spatial feature interactions and temporal transaction sequences.
+
+### 5. Risk-Centric Evaluation
+Shifting focus from pure Accuracy/AUC to economic reality:
+* **Cost-Sensitive Matrix:** Optimizing the decision threshold based on the cost of **False Positives** (customer friction/churn) vs. **False Negatives** (direct financial loss).
+
+---
 
 ## 📂 Project Structure
-- `data/`: Local datasets (ignored by Git due to file size).
-- `notebooks/`: Jupyter Notebooks for EDA, PCA experiments, and modeling.
-- `src/`: Modular Python scripts for data cleaning and engineering.
-- `models/`: Serialized model checkpoints (.joblib / .pkl).
-- `reports/`: Visualization outputs, SHAP plots, and project documentation.
+- `data/`: Optimized data storage (Parquet format, ignored by git).
+- `notebooks/`: 
+    - `01_Memory_Optimization.ipynb`: Downcasting and data conversion.
+    - `02_EDA_and_UMAP.ipynb`: Visualizing fraud clusters.
+    - `03_Feature_Engineering.ipynb`: UID construction and aggregation.
+    - `04_Model_Training_and_XAI.ipynb`: Benchmarking and SHAP interpretability.
+- `src/`: Modular Python scripts for the preprocessing pipeline.
+- `reports/`: Visualization outputs, SHAP global importance plots, and financial impact reports.
+
+---
 
 ## 🚀 Installation & Setup
+
 1. **Clone the repository:**
    ```bash
    git clone [https://github.com/RezBezzy/ieee-fraud-detection-shap.git](https://github.com/RezBezzy/ieee-fraud-detection-shap.git)
+   cd ieee-fraud-detection-shap
