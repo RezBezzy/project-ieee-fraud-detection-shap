@@ -76,6 +76,7 @@ models/*.pkl
 models/*.joblib
 models/*.h5
 models/*.onnx
+models/*.keras
 
 # 4. Logs & Visualization Outputs
 # Ignore local logs, keep the reports/ folder for final plots only.
