@@ -16,23 +16,21 @@ by measuring real single-transaction inference latency on the same CPU.
 
 | Model | AUC-ROC | F1 | Cost Savings vs. No Model | Inference (mean / p95) |
 |---|---|---|---|---|
-| LightGBM | 0.920 | 0.351 | $361,039 (59.2%) | 6.7ms / 8.4ms |
-| **XGBoost** | 0.916 | **0.474** | $363,107 (59.5%) | 27.8ms / 35.4ms |
-| Stacking (LightGBM+XGBoost+CatBoost) | 0.920 | 0.263 | $368,313 (60.4%) | 74.1ms / 95.8ms |
-| CNN-LSTM | 0.861 | 0.218 | $275,209 (45.1%) | 243.0ms / **348.6ms** |
+| **LightGBM** | **0.915** | 0.332 | **$327,398 (53.7%)** | **2.53ms / 3.07ms** |
+| XGBoost | 0.912 | **0.432** | $322,698 (52.9%) | 35.80ms / 57.48ms |
+| Stacking (LightGBM+XGBoost+CatBoost) | 0.913 | 0.256 | $331,587 (54.4%) | 84.99ms / 115.53ms |
+| CNN-LSTM | 0.838 | 0.192 | $160,609 (26.3%) | 115.49ms / 213.14ms |
 
-**XGBoost was selected as the final model.** Stacking achieves marginally
-higher cost savings (+0.9pp) but at roughly 3x the inference latency and
+**LightGBM was selected as the final model.** Stacking achieves marginally
+higher cost savings (+0.7pp) but at roughly 33x the inference latency and
 materially worse F1, which does not justify the added complexity of
-explaining a three-model ensemble. CNN-LSTM's p95 latency exceeds the 300ms
-real-time requirement, disqualifying it independent of its weaker ranking
-and cost performance.
+explaining a three-model ensemble. All four candidates satisfy the 300ms
+real-time requirement on both mean and p95 latency.
 
-A higher AUC-ROC does not always indicate the better business choice:
-LightGBM has a higher AUC-ROC than XGBoost (0.920 vs. 0.916), but XGBoost
-wins on cost savings, F1, and remains well within the latency budget --
-which is why every candidate here is evaluated on cost savings and measured
-latency, not on AUC-ROC alone.
+The cost savings gap between LightGBM, XGBoost, and Stacking is narrow
+(52.9%--54.4%), making latency the decisive tie-breaker: LightGBM at
+2.53ms is 14x faster than XGBoost and 33x faster than Stacking, while
+capturing nearly all of Stacking's cost-saving potential.
 
 ## Key findings
 
@@ -44,11 +42,13 @@ latency, not on AUC-ROC alone.
   Four of the top eight features by importance are engineered (UID
   aggregations, frequency encoding, card issue date), consistent with the
   pattern reported by the original Kaggle competition winners.
-- **SHAP's global ranking diverges from XGBoost's native (gain-based)
-  importance** (1/10 Top-10 overlap). Investigated rather than accepted at
-  face value: SHAP agrees far better with the `weight` metric (5/10 overlap,
-  improving to 70% at Top 30), consistent with SHAP rewarding features used
-  broadly across many trees rather than those with large gain per split.
+- **SHAP's global ranking diverges from LightGBM's native importance**
+  (4/10 Top-10 overlap with gain-based importance). Investigated rather
+  than accepted at face value: the direction of best agreement is
+  model-dependent -- for LightGBM, gain agrees better than weight/split
+  (6/10 vs 4/10 overlap), the opposite of the pattern typically seen for
+  XGBoost. Agreement improves to 83% at Top 30, confirming a robust
+  pattern rather than coincidence.
 
 ## Repository structure
 
@@ -92,7 +92,7 @@ models saved by 04, 04b, and 04c to be present locally in `models/`.
   Kaggle test set could not be used for additional validation -- its
   labels were never publicly released.
 - **Class imbalance**: handled via `scale_pos_weight`, not SMOTE, to avoid
-  generating synthetic transactions across 421 correlated/categorical
+  generating synthetic transactions across 340 correlated/categorical
   features.
 - **Model selection criterion**: cost savings against a no-model baseline
   (FN = transaction amount, FP = $10), evaluated independently per
@@ -102,8 +102,10 @@ models saved by 04, 04b, and 04c to be present locally in `models/`.
 ## Limitations
 
 CNN-LSTM treats each transaction as an independent feature vector rather
-than a true per-user sequence (average history per UID is 2.2
+than a true per-user sequence (average history per UID is 2.1
 transactions, too short for sequence modelling to be fairly tested). The
-SHAP/native-importance divergence is substantially, but not completely,
-explained by the gain-vs-weight distinction. See the report's Limitations
-section for the full list.
+feature engineering pipeline was corrected to compute all aggregation
+statistics (UID features, frequency encodings, PCA) exclusively on the
+training partition -- an earlier version computed these on the full dataset,
+introducing a leakage risk that has since been addressed. See the report's
+Limitations section for the full list.
